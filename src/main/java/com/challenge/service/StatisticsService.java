@@ -9,6 +9,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+import javax.xml.bind.ValidationException;
 
 import com.challenge.delegator.StatisticsDelegator;
 import com.challenge.model.Statistics;
@@ -31,7 +32,9 @@ public class StatisticsService {
 	@POST
 	@Path("transactions")
 	@Consumes("application/json")
-    public Response postTransaction(Transaction transaction) {
+    public Response postTransaction(Transaction transaction) throws ValidationException {
+		if(transaction == null) throw new ValidationException("NullPointerException", "10001");
+		if(transaction.getTimestamp() == 0l) throw new ValidationException("TimeStamp should not be null", "10002");
 		Date date = new Date();
 		if(date.getTime() - transaction.getTimestamp() <= StatisticsDelegator.TIME_LIMIT) {
 			StatisticsDelegator.compute(transaction);
