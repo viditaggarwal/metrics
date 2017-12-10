@@ -6,6 +6,7 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -32,15 +33,22 @@ public class StatisticsService {
 	@POST
 	@Path("transactions")
 	@Consumes("application/json")
-    public Response postTransaction(Transaction transaction) throws ValidationException {
-		if(transaction == null) throw new ValidationException("NullPointerException", "10001");
-		if(transaction.getTimestamp() == 0l) throw new ValidationException("TimeStamp should not be null", "10002");
-		Date date = new Date();
-		if(date.getTime() - transaction.getTimestamp() <= StatisticsDelegator.TIME_LIMIT) {
-			StatisticsDelegator.compute(transaction);
-			return Response.status(Status.CREATED).build();
-		}else {
-    			return Response.status(Status.NO_CONTENT).build();
+    public Response postTransaction(Transaction transaction)  {
+		try {
+			if(transaction == null) throw new ValidationException("NullPointerException", "10001");
+			if(transaction.getTimestamp() == 0l) throw new ValidationException("TimeStamp should not be null", "10002");
+			Date date = new Date();
+			if(date.getTime() - transaction.getTimestamp() <= StatisticsDelegator.TIME_LIMIT) {
+				StatisticsDelegator.compute(transaction);
+				return Response.status(Status.CREATED).build();
+			}else {
+	    			return Response.status(Status.NO_CONTENT).build();
+			}
+		}catch (ValidationException e) {
+			throw new WebApplicationException(Response.status(Status.BAD_REQUEST)// Or another Status
+	                .entity(e.getMessage()).build());
+		} catch (Exception e) {
+			return Response.status(Status.BAD_REQUEST).build();
 		}
     }
 }
